@@ -34,9 +34,8 @@ local.properties
 # Gradle generated files
 .gradle/
 
-# Gradle wrapper scripts (keep jar and properties)
-gradlew
-gradlew.bat
+# Gradle wrapper scripts (keep all wrapper files)
+# gradlew and gradlew.bat should be included in version control
 
 # VS Code
 .vscode/
