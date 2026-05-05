@@ -1,0 +1,8 @@
+参考附件文本代码，修改压缩包的radiodroid代码，可以导入和导出m3u电台文件列表，在电台-热门点击之前增加一个自定义的标签，可以显示导入的电台列表文件。电台列表文件内容如下:
+#EXTM3U
+#EXTINF:-1,AsiaFM亚洲经典台
+#EXTIMG:http://pic.qtfm.cn/2022/0712/20220712122112.jpeg!200
+http://goldfm.cn:8000/goldfm
+
+#EXTINF:-1,AsiaFM高清音乐台
+http://asiafm.hk:8000/asiahd
