@@ -504,6 +504,8 @@
     <string name="network_check_fastest_label">最快连接</string>
     <string name="pref_disable_online_verification_title">离线模式</string>
     <string name="pref_disable_online_verification_summary">不联网验证电台，仅使用本地 M3U 数据</string>
+    <string name="pref_compatibility_mode_title">兼容模式</string>
+    <string name="pref_compatibility_mode_summary">为 Android 4.4 及更早版本设备使用旧版文件选择器</string>
     <string name="error_station_not_found_offline">离线模式下未找到电台。</string>
     <string name="error_random_play_offline">随机播放功能在离线模式下不可用。</string>
     

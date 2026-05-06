@@ -547,6 +547,33 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
     }
     
     /**
+     * 兼容模式下的文件选择结果处理（Android 4.4 及更早版本）
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        
+        // 兼容模式下使用旧版 API
+        if (Utils.isCompatibilityMode(this)) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                final Uri finalUri = data.getData();
+                Log.d(TAG, "Compatibility mode - Choosen path: " + finalUri);
+                
+                // 直接调用 launcher 的回调处理
+                // 由于 launcher 需要 Intent 作为输入，我们创建一个新的 Intent 来传递数据
+                Intent resultIntent = new Intent();
+                resultIntent.setData(finalUri);
+                
+                if (requestCode == 1001 || requestCode == 1002) {
+                    saveFileLauncher.launch(resultIntent);
+                } else if (requestCode == 1003 || requestCode == 1004) {
+                    loadFileLauncher.launch(resultIntent);
+                }
+            }
+        }
+    }
+    
+    /**
      * 导航到设置页面
      */
     private void navigateToSettings() {
@@ -1033,7 +1060,13 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         }
         
         Log.d(TAG, "Launching save file launcher with intent: " + intent);
-        saveFileLauncher.launch(intent);
+        
+        // 兼容模式下使用旧版 API
+        if (Utils.isCompatibilityMode(this)) {
+            startActivityForResult(intent, 1001);
+        } else {
+            saveFileLauncher.launch(intent);
+        }
     }
 
     void SaveFavouritesSimple() {
@@ -1058,7 +1091,13 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         }
         
         Log.d(TAG, "Launching save file launcher (simple) with intent: " + intent);
-        saveFileLauncher.launch(intent);
+        
+        // 兼容模式下使用旧版 API
+        if (Utils.isCompatibilityMode(this)) {
+            startActivityForResult(intent, 1002);
+        } else {
+            saveFileLauncher.launch(intent);
+        }
     }
 
     void LoadFavourites() {
@@ -1076,7 +1115,13 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         }
         
         Log.d(TAG, "Launching load file launcher with intent: " + intent);
-        loadFileLauncher.launch(intent);
+        
+        // 兼容模式下使用旧版 API
+        if (Utils.isCompatibilityMode(this)) {
+            startActivityForResult(intent, 1003);
+        } else {
+            loadFileLauncher.launch(intent);
+        }
     }
 
     void LoadFavouritesSimple() {
@@ -1094,7 +1139,13 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         }
         
         Log.d(TAG, "Launching load file launcher (simple) with intent: " + intent);
-        loadFileLauncher.launch(intent);
+        
+        // 兼容模式下使用旧版 API
+        if (Utils.isCompatibilityMode(this)) {
+            startActivityForResult(intent, 1004);
+        } else {
+            loadFileLauncher.launch(intent);
+        }
     }
 
     @Override

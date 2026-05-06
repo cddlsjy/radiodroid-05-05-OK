@@ -553,6 +553,11 @@ public class Utils {
         return prefs.getBoolean("disable_online_verification", false);
     }
 
+    public static boolean isCompatibilityMode(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getBoolean("compatibility_mode", false);
+    }
+
     public static String formatStringWithNamedArgs(String format, Map<String, String> args) {
         StringBuilder builder = new StringBuilder(format);
         for (Map.Entry<String, String> entry : args.entrySet()) {
