@@ -156,6 +156,11 @@ public class AlarmReceiver extends BroadcastReceiver {
                     return station.StreamUrl;
                 }
 
+                // 离线模式不联网获取流地址
+                if (Utils.isOfflineMode(context)) {
+                    return null;
+                }
+
                 String result = null;
                 for (int i=0;i<20;i++){
                     result = Utils.getRealStationLink(httpClient, context, stationId);

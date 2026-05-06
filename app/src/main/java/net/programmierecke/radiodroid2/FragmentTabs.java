@@ -155,9 +155,6 @@ public class FragmentTabs extends Fragment implements IFragmentRefreshable, IFra
 
         FragmentManager m = getChildFragmentManager();
         ViewPagerAdapter adapter = new ViewPagerAdapter(m);
-        if (!offlineMode && countryCode != null){
-            adapter.addFragment(fragments[IDX_LOCAL], R.string.action_local);
-        }
         adapter.addFragment(fragments[IDX_TOP_CLICK], R.string.action_top_click);
         adapter.addFragment(fragments[IDX_TOP_VOTE], R.string.action_top_vote);
         adapter.addFragment(fragments[IDX_CHANGED_LATELY], R.string.action_changed_lately);

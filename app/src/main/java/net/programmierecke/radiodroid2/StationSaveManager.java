@@ -384,7 +384,7 @@ public class StationSaveManager extends Observable {
                 station.queue = this;
             }
             listStations.addAll(arr);
-            if (hasInvalidUuids() && Utils.hasAnyConnection(context) && !Utils.isOfflineMode(context)) {
+            if (!isOfflineMode() && hasInvalidUuids() && Utils.hasAnyConnection(context)) {
                 refreshStationsFromServer();
             }
         } else {
