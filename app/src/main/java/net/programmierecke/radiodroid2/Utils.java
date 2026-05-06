@@ -547,6 +547,11 @@ public class Utils {
         return sharedPref.getBoolean("bottom_navigation", true);
     }
 
+    public static boolean isOfflineMode(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getBoolean("disable_online_verification", false);
+    }
+
     public static String formatStringWithNamedArgs(String format, Map<String, String> args) {
         StringBuilder builder = new StringBuilder(format);
         for (Map.Entry<String, String> entry : args.entrySet()) {

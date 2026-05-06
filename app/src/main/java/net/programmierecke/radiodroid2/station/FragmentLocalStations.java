@@ -110,6 +110,10 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
     }
 
     private void loadData() {
+        if (Utils.isOfflineMode(getContext())) {
+            showError("离线模式，不加载网络电台");
+            return;
+        }
         showLoading(true);
         new LoadStationsTask().execute();
     }

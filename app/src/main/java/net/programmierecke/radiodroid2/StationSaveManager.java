@@ -9,6 +9,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -383,7 +384,7 @@ public class StationSaveManager extends Observable {
                 station.queue = this;
             }
             listStations.addAll(arr);
-            if (hasInvalidUuids() && Utils.hasAnyConnection(context)) {
+            if (hasInvalidUuids() && Utils.hasAnyConnection(context) && !Utils.isOfflineMode(context)) {
                 refreshStationsFromServer();
             }
         } else {
@@ -662,6 +663,11 @@ public class StationSaveManager extends Observable {
                         station.Name = stationName;
                         station.StreamUrl = stationUrl;
                         station.IconUrl = stationIconUrl;
+                        
+                        if (TextUtils.isEmpty(station.StationUuid)) {
+                            station.StationUuid = java.util.UUID.randomUUID().toString();
+                            station.ChangeUuid = station.StationUuid;
+                        }
                         
                         // 尝试从服务器获取完整信息
                         if (!stationUuid.isEmpty() && !isOfflineMode()) {

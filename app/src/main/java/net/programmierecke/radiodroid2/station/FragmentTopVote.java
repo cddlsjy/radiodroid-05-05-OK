@@ -103,6 +103,10 @@ public class FragmentTopVote extends FragmentBase implements IFragmentSearchable
     }
 
     private void loadData() {
+        if (Utils.isOfflineMode(getContext())) {
+            showError(true, "离线模式，不加载网络电台");
+            return;
+        }
         showLoading(true);
         new LoadStationsTask().execute();
     }

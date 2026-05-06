@@ -111,6 +111,10 @@ public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSe
 
     private void loadData() {
         Log.d(TAG, "loadData called");
+        if (Utils.isOfflineMode(getContext())) {
+            showError(true, "离线模式，不加载网络电台");
+            return;
+        }
         showLoading(true);
         new LoadStationsTask().execute();
     }
