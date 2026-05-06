@@ -140,6 +140,7 @@ public class FragmentTabs extends Fragment implements IFragmentRefreshable, IFra
 
     private void setupViewPager(ViewPager viewPager) {
         String countryCode = getCountryCode();
+        boolean offlineMode = Utils.isOfflineMode(getContext());
 
         fragments[IDX_LOCAL] = new FragmentLocalStations();
         fragments[IDX_TOP_CLICK] = new FragmentTopClick();
@@ -154,7 +155,7 @@ public class FragmentTabs extends Fragment implements IFragmentRefreshable, IFra
 
         FragmentManager m = getChildFragmentManager();
         ViewPagerAdapter adapter = new ViewPagerAdapter(m);
-        if (countryCode != null){
+        if (!offlineMode && countryCode != null){
             adapter.addFragment(fragments[IDX_LOCAL], R.string.action_local);
         }
         adapter.addFragment(fragments[IDX_TOP_CLICK], R.string.action_top_click);

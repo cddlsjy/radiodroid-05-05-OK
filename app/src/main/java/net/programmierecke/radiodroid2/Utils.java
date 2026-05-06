@@ -214,6 +214,7 @@ public class Utils {
     }
 
     public static String downloadFeedRelative(OkHttpClient httpClient, Context ctx, String theRelativeUri, boolean forceUpdate, Map<String, String> dictParams) {
+        if (isOfflineMode(ctx)) return null;
         // try current server for download
         String currentServer = RadioBrowserServerManager.getCurrentServer();
         if (currentServer == null) {
