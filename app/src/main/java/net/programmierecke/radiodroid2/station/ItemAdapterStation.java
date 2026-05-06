@@ -369,7 +369,7 @@ public class ItemAdapterStation
         }
 
         holder.textViewShortDescription.setText(station.getShortDetails(getContext()));
-        holder.textViewTags.setText(station.TagsAll.replace(",", ", "));
+        holder.textViewTags.setText((station.TagsAll != null ? station.TagsAll : "").replace(",", ", "));
         
         // 设置简短描述和标签的文本颜色
         if (isDarkTheme) {
@@ -474,7 +474,7 @@ public class ItemAdapterStation
                 holder.buttonPlayInternalOrExternal.setOnClickListener(v -> Utils.playAndWarnIfMetered((RadioDroidApp) context.getApplicationContext(), station,
                         PlayerType.EXTERNAL, () -> PlayStationTask.playExternal(station, context).execute()));
             }
-            String[] tags = station.TagsAll.split(",");
+            String[] tags = (station.TagsAll != null ? station.TagsAll.split(",") : new String[0]);
             holder.viewTags.setTags(Arrays.asList(tags));
             holder.viewTags.setTagSelectionCallback(tagSelectionCallback);
         }

@@ -156,6 +156,20 @@ public class FragmentMultiSearch extends FragmentBase {
     }
     
     private void loadFilterOptions() {
+        if (Utils.isOfflineMode(getContext())) {
+            countriesList.clear();
+            languagesList.clear();
+            tagsList.clear();
+            countriesList.add(getString(R.string.multi_search_all));
+            languagesList.add(getString(R.string.multi_search_all));
+            tagsList.add(getString(R.string.multi_search_all));
+            updateCountrySpinner();
+            updateLanguageSpinner();
+            updateTagSpinner();
+            showOfflineError();
+            return;
+        }
+        
         countriesList.clear();
         languagesList.clear();
         tagsList.clear();
@@ -172,6 +186,14 @@ public class FragmentMultiSearch extends FragmentBase {
         
         tagsList.add(getString(R.string.multi_search_all));
         new LoadTagsTask().execute();
+    }
+    
+    private void showOfflineError() {
+        View layoutError = getView().findViewById(R.id.layoutError);
+        if (layoutError != null) {
+            layoutError.setVisibility(View.VISIBLE);
+            recyclerViewStations.setVisibility(View.GONE);
+        }
     }
     
     private class LoadCountriesTask extends AsyncTask<Void, Void, List<String>> {

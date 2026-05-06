@@ -178,6 +178,12 @@ public class FragmentStations extends FragmentBase implements IFragmentSearchabl
     }
 
     private void loadData() {
+        if (Utils.isOfflineMode(getContext())) {
+            rvStations.setVisibility(View.GONE);
+            layoutError.setVisibility(View.VISIBLE);
+            swipeRefreshLayout.setRefreshing(false);
+            return;
+        }
         showLoading(true);
         new LoadStationsTask().execute();
     }

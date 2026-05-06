@@ -663,6 +663,18 @@ public class StationSaveManager extends Observable {
                         station.Name = stationName;
                         station.StreamUrl = stationUrl;
                         station.IconUrl = stationIconUrl;
+                        station.TagsAll = "";
+                        station.Country = "";
+                        station.CountryCode = "";
+                        station.State = "";
+                        station.Language = "";
+                        station.HomePageUrl = "";
+                        station.Bitrate = 0;
+                        station.Votes = 0;
+                        station.ClickCount = 0;
+                        station.ClickTrend = 0;
+                        station.Working = true;
+                        station.Hls = false;
                         
                         if (TextUtils.isEmpty(station.StationUuid)) {
                             station.StationUuid = java.util.UUID.randomUUID().toString();
