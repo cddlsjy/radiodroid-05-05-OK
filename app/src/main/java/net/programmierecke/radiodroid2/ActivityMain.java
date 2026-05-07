@@ -233,6 +233,8 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             getSupportActionBar().setHomeButtonEnabled(true);
         }
 
+        updateNavigationMenuVisibility();
+
         smallPlayerFragment = (FragmentPlayerSmall) mFragmentManager.findFragmentById(R.id.fragment_player_small);
         fullPlayerFragment = (FragmentPlayerFull) mFragmentManager.findFragmentById(R.id.fragment_player_full);
 
@@ -727,6 +729,8 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         if (playerBottomSheet.getState() == BottomSheetBehavior.STATE_EXPANDED) {
             appBarLayout.setExpanded(false);
         }
+
+        updateNavigationMenuVisibility();
 
         Intent intent = getIntent();
         if (intent != null) {
@@ -1361,6 +1365,28 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
 
         if (mNavigationView.getMenu().findItem(selectedMenuItem) != null)
             mNavigationView.getMenu().findItem(selectedMenuItem).setChecked(true);
+    }
+
+    private void updateNavigationMenuVisibility() {
+        if (mBottomNavigationView == null || mNavigationView == null) {
+            return;
+        }
+
+        boolean offlineMode = Utils.isOfflineMode(this);
+
+        MenuItem stationsItem = mBottomNavigationView.getMenu().findItem(R.id.nav_item_stations);
+        if (stationsItem != null) {
+            stationsItem.setVisible(!offlineMode);
+        }
+
+        stationsItem = mNavigationView.getMenu().findItem(R.id.nav_item_stations);
+        if (stationsItem != null) {
+            stationsItem.setVisible(!offlineMode);
+        }
+
+        if (offlineMode && selectedMenuItem == R.id.nav_item_stations) {
+            selectMenuItem(R.id.nav_item_history);
+        }
     }
 
     public void search(StationsFilter.SearchStyle searchStyle, String query) {
