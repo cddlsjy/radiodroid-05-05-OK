@@ -270,6 +270,7 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="settings_fullscreen_mode_default">Default</string>
     <string name="settings_fullscreen_mode_simplified">Simplified</string>
     <string name="settings_fullscreen_mode_landscape">Landscape</string>
+    <string name="settings_fullscreen_mode_cover">Cover</string>
 
     <string name="settings_auto_resume_do_not_resume">Do not resume</string>
 

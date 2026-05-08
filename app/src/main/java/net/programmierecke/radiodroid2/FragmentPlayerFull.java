@@ -79,6 +79,7 @@ public class FragmentPlayerFull extends Fragment {
     private static final String FULLSCREEN_MODE_DEFAULT = "default";
     private static final String FULLSCREEN_MODE_SIMPLIFIED = "simplified";
     private static final String FULLSCREEN_MODE_LANDSCAPE = "landscape";
+    private static final String FULLSCREEN_MODE_COVER = "cover";
 
     /**
      * Fragment may be a part of another view which could be dragged/scrolled
@@ -145,6 +146,9 @@ public class FragmentPlayerFull extends Fragment {
     // Simplified mode only
     private ImageView imageViewArt;
 
+    // Cover mode only
+    private TextView textViewStationName;
+
     // Landscape mode - history and favourites
     private ViewPager pagerHistoryAndFavourites;
     private HistoryAndFavouritesPagerAdapter historyAndFavouritesPagerAdapter;
@@ -191,12 +195,15 @@ public class FragmentPlayerFull extends Fragment {
         String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
         boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
         boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+        boolean isCoverMode = FULLSCREEN_MODE_COVER.equals(mode);
 
         int layoutRes;
         if (isSimplifiedMode) {
             layoutRes = R.layout.layout_player_full_simplified;
         } else if (isLandscapeMode) {
             layoutRes = R.layout.layout_player_full_landscape;
+        } else if (isCoverMode) {
+            layoutRes = R.layout.layout_player_full_cover;
         } else {
             layoutRes = R.layout.layout_player_full;
         }
@@ -209,6 +216,8 @@ public class FragmentPlayerFull extends Fragment {
             initSimplifiedMode(view);
         } else if (isLandscapeMode) {
             initLandscapeMode(view);
+        } else if (isCoverMode) {
+            initCoverMode(view);
         } else {
             initDefaultMode(view);
         }
@@ -365,6 +374,14 @@ public class FragmentPlayerFull extends Fragment {
 
     private void initSimplifiedMode(View view) {
         textViewGeneralInfo = view.findViewById(R.id.textViewGeneralInfo);
+        textViewTimePlayed = view.findViewById(R.id.textViewTimePlayed);
+        textViewNetworkUsageInfo = view.findViewById(R.id.textViewNetworkUsageInfo);
+        imageViewArt = view.findViewById(R.id.imageViewArt);
+    }
+
+    private void initCoverMode(View view) {
+        textViewGeneralInfo = view.findViewById(R.id.textViewGeneralInfo);
+        textViewStationName = view.findViewById(R.id.textViewStationName);
         textViewTimePlayed = view.findViewById(R.id.textViewTimePlayed);
         textViewNetworkUsageInfo = view.findViewById(R.id.textViewNetworkUsageInfo);
         imageViewArt = view.findViewById(R.id.imageViewArt);
@@ -641,6 +658,7 @@ public class FragmentPlayerFull extends Fragment {
         String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
         boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
         boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+        boolean isCoverMode = FULLSCREEN_MODE_COVER.equals(mode);
 
         if (station != null) {
             final ShoutcastInfo shoutcastInfo = PlayerServiceUtil.getShoutcastInfo();
@@ -696,7 +714,7 @@ public class FragmentPlayerFull extends Fragment {
                 textViewGeneralInfo.setContentDescription("正在收听" + station.Name + "电台");
             }
 
-            if (!isSimplifiedMode && !isLandscapeMode) {
+            if (!isSimplifiedMode && !isLandscapeMode && !isCoverMode) {
                 Drawable flag = CountryFlagsLoader.getInstance().getFlag(requireContext(), station.CountryCode);
                 if (flag != null) {
                     float k = flag.getMinimumWidth() / (float) flag.getMinimumHeight();
@@ -717,6 +735,10 @@ public class FragmentPlayerFull extends Fragment {
                 String[] tags = station.TagsAll.split(",");
                 artAndInfoPagerAdapter.viewTags.setTags(Arrays.asList(tags));
                 //artAndInfoPagerAdapter.viewTags.setTagSelectionCallback(tagSelectionCallback);
+            }
+
+            if (isCoverMode && textViewStationName != null) {
+                textViewStationName.setText(station.Name);
             }
         }
 
@@ -823,8 +845,9 @@ public class FragmentPlayerFull extends Fragment {
         String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
         boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
         boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+        boolean isCoverMode = FULLSCREEN_MODE_COVER.equals(mode);
 
-        if (isSimplifiedMode || isLandscapeMode) {
+        if (isSimplifiedMode || isLandscapeMode || isCoverMode) {
             if (station.hasIcon()) {
                 Picasso.get()
                         .load(station.IconUrl)
