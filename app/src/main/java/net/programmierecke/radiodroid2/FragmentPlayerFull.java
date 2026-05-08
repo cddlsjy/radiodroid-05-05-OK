@@ -54,6 +54,7 @@ import net.programmierecke.radiodroid2.service.PauseReason;
 import net.programmierecke.radiodroid2.service.PlayerService;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
+import net.programmierecke.radiodroid2.station.FavouriteListAdapter;
 import net.programmierecke.radiodroid2.station.StationActions;
 import net.programmierecke.radiodroid2.station.live.ShoutcastInfo;
 import net.programmierecke.radiodroid2.station.live.StreamLiveInfo;
@@ -143,6 +144,12 @@ public class FragmentPlayerFull extends Fragment {
     
     // Simplified mode only
     private ImageView imageViewArt;
+
+    // Landscape mode - history and favourites
+    private ViewPager pagerHistoryAndFavourites;
+    private HistoryAndFavouritesPagerAdapter historyAndFavouritesPagerAdapter;
+    private FavouriteListAdapter favouriteListAdapter;
+    private java.util.Observer landscapeFavouritesObserver;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -368,6 +375,65 @@ public class FragmentPlayerFull extends Fragment {
         textViewTimePlayed = view.findViewById(R.id.textViewTimePlayed);
         textViewNetworkUsageInfo = view.findViewById(R.id.textViewNetworkUsageInfo);
         imageViewArt = view.findViewById(R.id.imageViewArt);
+
+        // 初始化播放历史适配器
+        trackHistoryAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                if (historyAndFavouritesPagerAdapter != null &&
+                    historyAndFavouritesPagerAdapter.recyclerViewSongHistory != null) {
+                    final LinearLayoutManager lm = (LinearLayoutManager) historyAndFavouritesPagerAdapter.recyclerViewSongHistory.getLayoutManager();
+                    if (lm != null && lm.findFirstVisibleItemPosition() < 2) {
+                        historyAndFavouritesPagerAdapter.recyclerViewSongHistory.scrollToPosition(0);
+                    }
+                }
+            }
+        });
+
+        // 初始化收藏列表适配器
+        favouriteListAdapter = new FavouriteListAdapter(station -> {
+            RadioDroidApp radioDroidApp = (RadioDroidApp) requireActivity().getApplication();
+            Utils.showPlaySelection(radioDroidApp, station, getActivity().getSupportFragmentManager());
+        });
+
+        // 初始化 ViewPager（播放历史 + 收藏列表）
+        pagerHistoryAndFavourites = view.findViewById(R.id.pagerHistoryAndFavourites);
+        historyAndFavouritesPagerAdapter = new HistoryAndFavouritesPagerAdapter(requireContext(), pagerHistoryAndFavourites);
+        pagerHistoryAndFavourites.setAdapter(historyAndFavouritesPagerAdapter);
+
+        // 设置播放历史 RecyclerView
+        historyAndFavouritesPagerAdapter.recyclerViewSongHistory.setAdapter(trackHistoryAdapter);
+        LinearLayoutManager llmHistory = new LinearLayoutManager(getContext());
+        llmHistory.setOrientation(RecyclerView.VERTICAL);
+        historyAndFavouritesPagerAdapter.recyclerViewSongHistory.setLayoutManager(llmHistory);
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(
+                historyAndFavouritesPagerAdapter.recyclerViewSongHistory.getContext(), llmHistory.getOrientation());
+        historyAndFavouritesPagerAdapter.recyclerViewSongHistory.addItemDecoration(dividerItemDecoration);
+
+        // 设置收藏列表 RecyclerView
+        historyAndFavouritesPagerAdapter.recyclerViewFavourites.setAdapter(favouriteListAdapter);
+        LinearLayoutManager llmFavourites = new LinearLayoutManager(getContext());
+        llmFavourites.setOrientation(RecyclerView.VERTICAL);
+        historyAndFavouritesPagerAdapter.recyclerViewFavourites.setLayoutManager(llmFavourites);
+        historyAndFavouritesPagerAdapter.recyclerViewFavourites.addItemDecoration(dividerItemDecoration);
+
+        // 观察播放历史数据变化
+        trackHistoryViewModel = ViewModelProviders.of(this).get(TrackHistoryViewModel.class);
+        trackHistoryViewModel.getAllHistoryPaged().observe(getViewLifecycleOwner(), new Observer<PagedList<TrackHistoryEntry>>() {
+            @Override
+            public void onChanged(@Nullable PagedList<TrackHistoryEntry> songHistoryEntries) {
+                trackHistoryAdapter.submitList(songHistoryEntries);
+            }
+        });
+
+        // 观察收藏列表数据变化
+        landscapeFavouritesObserver = (observable, o) -> {
+            if (favouriteListAdapter != null && favouriteManager != null) {
+                favouriteListAdapter.updateList(favouriteManager.getList());
+            }
+        };
+        favouriteManager.addObserver(landscapeFavouritesObserver);
+        // 初始加载收藏列表
+        favouriteListAdapter.updateList(favouriteManager.getList());
     }
 
     public void init() {
@@ -424,7 +490,13 @@ public class FragmentPlayerFull extends Fragment {
 
                 updateRunningRecording();
 
-                pagerHistoryAndRecordings.setCurrentItem(1, true);
+                // 横屏模式下没有录制列表Tab，不切换页面
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+                String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
+                boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+                if (!isLandscapeMode) {
+                    pagerHistoryAndRecordings.setCurrentItem(1, true);
+                }
             }
         });
 
@@ -518,10 +590,17 @@ public class FragmentPlayerFull extends Fragment {
         recordingsManager.getSavedRecordingsObservable().deleteObserver(recordingsObserver);
 
         favouriteManager.deleteObserver(favouritesObserver);
+
+        // 移除横屏模式下的收藏列表观察者
+        if (landscapeFavouritesObserver != null) {
+            favouriteManager.deleteObserver(landscapeFavouritesObserver);
+        }
     }
 
     public void resetScroll() {
-        scrollViewContent.scrollTo(0, 0);
+        if (scrollViewContent != null) {
+            scrollViewContent.scrollTo(0, 0);
+        }
         
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
         String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
@@ -531,11 +610,14 @@ public class FragmentPlayerFull extends Fragment {
         if (!isSimplifiedMode && !isLandscapeMode) {
             historyAndRecordsPagerAdapter.recyclerViewSongHistory.scrollToPosition(0);
             historyAndRecordsPagerAdapter.recyclerViewRecordings.scrollToPosition(0);
+        } else if (isLandscapeMode && historyAndFavouritesPagerAdapter != null) {
+            historyAndFavouritesPagerAdapter.recyclerViewSongHistory.scrollToPosition(0);
+            historyAndFavouritesPagerAdapter.recyclerViewFavourites.scrollToPosition(0);
         }
     }
 
     public boolean isScrolled() {
-        return scrollViewContent.getScrollY() > 0;
+        return scrollViewContent != null && scrollViewContent.getScrollY() > 0;
     }
 
     private void playLastFromHistory() {
@@ -707,6 +789,14 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     private void updateRunningRecording() {
+        // 横屏模式下没有录制信息 UI，直接返回
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
+        boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+        if (isLandscapeMode) {
+            return;
+        }
+
         if (PlayerServiceUtil.isRecording()) {
             final Map<Recordable, RunningRecordingInfo> runningRecordings = recordingsManager.getRunningRecordings();
             final RunningRecordingInfo recordingInfo = runningRecordings.entrySet().iterator().next().getValue();
@@ -1013,6 +1103,72 @@ public class FragmentPlayerFull extends Fragment {
             } else {
                 collection.addView(layoutRecordings);
                 return layoutRecordings;
+            }
+        }
+
+        @Override
+        public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object view) {
+            container.removeView((View) view);
+        }
+
+        @Override
+        public int getCount() {
+            return 2;
+        }
+
+        @Override
+        public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
+            return view == object;
+        }
+
+        @Nullable
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return titles[position];
+        }
+    }
+
+    /**
+     * 横屏模式下的播放历史 + 收藏列表 ViewPager 适配器
+     */
+    private class HistoryAndFavouritesPagerAdapter extends PagerAdapter {
+        private ViewGroup layoutSongHistory;
+        private ViewGroup layoutFavourites;
+
+        private String[] titles;
+
+        RecyclerView recyclerViewSongHistory;
+        RecyclerView recyclerViewFavourites;
+
+        HistoryAndFavouritesPagerAdapter(@NonNull Context context, @NonNull ViewGroup parent) {
+            LayoutInflater inflater = LayoutInflater.from(context);
+
+            layoutSongHistory = (ViewGroup) inflater.inflate(R.layout.page_player_history, parent, false);
+
+            // 收藏列表页面使用简单的 RecyclerView 布局
+            layoutFavourites = new RecyclerView(context);
+            layoutFavourites.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+
+            titles = new String[]{
+                    getResources().getString(R.string.tab_player_history),
+                    getResources().getString(R.string.tab_player_favourites)
+            };
+
+            recyclerViewSongHistory = layoutSongHistory.findViewById(R.id.recyclerViewSongHistory);
+            recyclerViewFavourites = (RecyclerView) layoutFavourites;
+        }
+
+        @NonNull
+        @Override
+        public Object instantiateItem(@NonNull ViewGroup collection, int position) {
+            if (position == 0) {
+                collection.addView(layoutSongHistory);
+                return layoutSongHistory;
+            } else {
+                collection.addView(layoutFavourites);
+                return layoutFavourites;
             }
         }
 

@@ -364,6 +364,7 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="tab_player_info">Info</string>
     <string name="tab_player_history">Track history</string>
     <string name="tab_player_recordings">Recordings</string>
+    <string name="tab_player_favourites">Favorites</string>
 
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">BROKEN</string>
