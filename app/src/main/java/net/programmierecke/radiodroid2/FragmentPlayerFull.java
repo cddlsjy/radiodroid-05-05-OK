@@ -75,6 +75,10 @@ public class FragmentPlayerFull extends Fragment {
 
     private final static int PERM_REQ_STORAGE_RECORD = 1001;
 
+    private static final String FULLSCREEN_MODE_DEFAULT = "default";
+    private static final String FULLSCREEN_MODE_SIMPLIFIED = "simplified";
+    private static final String FULLSCREEN_MODE_LANDSCAPE = "landscape";
+
     /**
      * Fragment may be a part of another view which could be dragged/scrolled
      * and certain hacks may require the fragment to request them to stop
@@ -136,6 +140,9 @@ public class FragmentPlayerFull extends Fragment {
     private ImageButton btnNext;
     private ImageButton btnRecord;
     private ImageButton btnFavourite;
+    
+    // Simplified mode only
+    private ImageView imageViewArt;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -148,14 +155,6 @@ public class FragmentPlayerFull extends Fragment {
         favouriteManager = radioDroidApp.getFavouriteManager();
 
         trackHistoryAdapter = new TrackHistoryAdapter(requireActivity());
-        trackHistoryAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            public void onItemRangeInserted(int positionStart, int itemCount) {
-                final LinearLayoutManager lm = (LinearLayoutManager) historyAndRecordsPagerAdapter.recyclerViewSongHistory.getLayoutManager();
-                if (lm.findFirstVisibleItemPosition() < 2) {
-                    historyAndRecordsPagerAdapter.recyclerViewSongHistory.scrollToPosition(0);
-                }
-            }
-        });
 
         trackHistoryRepository = radioDroidApp.getTrackHistoryRepository();
 
@@ -181,9 +180,74 @@ public class FragmentPlayerFull extends Fragment {
             }
         };
 
-        View view = inflater.inflate(R.layout.layout_player_full, container, false);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
+        boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
+        boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+
+        int layoutRes;
+        if (isSimplifiedMode) {
+            layoutRes = R.layout.layout_player_full_simplified;
+        } else if (isLandscapeMode) {
+            layoutRes = R.layout.layout_player_full_landscape;
+        } else {
+            layoutRes = R.layout.layout_player_full;
+        }
+
+        View view = inflater.inflate(layoutRes, container, false);
 
         scrollViewContent = view.findViewById(R.id.scrollViewContent);
+
+        if (isSimplifiedMode) {
+            initSimplifiedMode(view);
+        } else if (isLandscapeMode) {
+            initLandscapeMode(view);
+        } else {
+            initDefaultMode(view);
+        }
+
+        btnPlay = view.findViewById(R.id.buttonPlay);
+        btnPrev = view.findViewById(R.id.buttonPrev);
+        btnNext = view.findViewById(R.id.buttonNext);
+        btnRecord = view.findViewById(R.id.buttonRecord);
+        btnFavourite = view.findViewById(R.id.buttonFavorite);
+
+        view.setFocusableInTouchMode(true);
+        view.requestFocus();
+        view.setOnKeyListener((v, keyCode, event) -> {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                switch (keyCode) {
+                    case KeyEvent.KEYCODE_DPAD_UP:
+                        PlayerServiceUtil.skipToPrevious();
+                        return true;
+                    case KeyEvent.KEYCODE_DPAD_DOWN:
+                        PlayerServiceUtil.skipToNext();
+                        return true;
+                    case KeyEvent.KEYCODE_DPAD_CENTER:
+                    case KeyEvent.KEYCODE_ENTER:
+                        if (PlayerServiceUtil.isPlaying()) {
+                            PlayerServiceUtil.pause(PauseReason.USER);
+                        } else {
+                            playLastFromHistory();
+                        }
+                        return true;
+                }
+            }
+            return false;
+        });
+
+        return view;
+    }
+
+    private void initDefaultMode(View view) {
+        trackHistoryAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                final LinearLayoutManager lm = (LinearLayoutManager) historyAndRecordsPagerAdapter.recyclerViewSongHistory.getLayoutManager();
+                if (lm.findFirstVisibleItemPosition() < 2) {
+                    historyAndRecordsPagerAdapter.recyclerViewSongHistory.scrollToPosition(0);
+                }
+            }
+        });
 
         pagerArtAndInfo = view.findViewById(R.id.pagerArtAndInfo);
         artAndInfoPagerAdapter = new ArtAndInfoPagerAdapter(requireContext(), pagerArtAndInfo);
@@ -242,12 +306,6 @@ public class FragmentPlayerFull extends Fragment {
         historyAndRecordsPagerAdapter = new HistoryAndRecordsPagerAdapter(requireContext(), pagerHistoryAndRecordings);
         pagerHistoryAndRecordings.setAdapter(historyAndRecordsPagerAdapter);
 
-        btnPlay = view.findViewById(R.id.buttonPlay);
-        btnPrev = view.findViewById(R.id.buttonPrev);
-        btnNext = view.findViewById(R.id.buttonNext);
-        btnRecord = view.findViewById(R.id.buttonRecord);
-        btnFavourite = view.findViewById(R.id.buttonFavorite);
-
         historyAndRecordsPagerAdapter.recyclerViewSongHistory.setAdapter(trackHistoryAdapter);
 
         LinearLayoutManager llmHistory = new LinearLayoutManager(getContext());
@@ -296,32 +354,20 @@ public class FragmentPlayerFull extends Fragment {
                 }
             });
         }
+    }
 
-        view.setFocusableInTouchMode(true);
-        view.requestFocus();
-        view.setOnKeyListener((v, keyCode, event) -> {
-            if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                switch (keyCode) {
-                    case KeyEvent.KEYCODE_DPAD_UP:
-                        PlayerServiceUtil.skipToPrevious();
-                        return true;
-                    case KeyEvent.KEYCODE_DPAD_DOWN:
-                        PlayerServiceUtil.skipToNext();
-                        return true;
-                    case KeyEvent.KEYCODE_DPAD_CENTER:
-                    case KeyEvent.KEYCODE_ENTER:
-                        if (PlayerServiceUtil.isPlaying()) {
-                            PlayerServiceUtil.pause(PauseReason.USER);
-                        } else {
-                            playLastFromHistory();
-                        }
-                        return true;
-                }
-            }
-            return false;
-        });
+    private void initSimplifiedMode(View view) {
+        textViewGeneralInfo = view.findViewById(R.id.textViewGeneralInfo);
+        textViewTimePlayed = view.findViewById(R.id.textViewTimePlayed);
+        textViewNetworkUsageInfo = view.findViewById(R.id.textViewNetworkUsageInfo);
+        imageViewArt = view.findViewById(R.id.imageViewArt);
+    }
 
-        return view;
+    private void initLandscapeMode(View view) {
+        textViewGeneralInfo = view.findViewById(R.id.textViewGeneralInfo);
+        textViewTimePlayed = view.findViewById(R.id.textViewTimePlayed);
+        textViewNetworkUsageInfo = view.findViewById(R.id.textViewNetworkUsageInfo);
+        imageViewArt = view.findViewById(R.id.imageViewArt);
     }
 
     public void init() {
@@ -476,8 +522,16 @@ public class FragmentPlayerFull extends Fragment {
 
     public void resetScroll() {
         scrollViewContent.scrollTo(0, 0);
-        historyAndRecordsPagerAdapter.recyclerViewSongHistory.scrollToPosition(0);
-        historyAndRecordsPagerAdapter.recyclerViewRecordings.scrollToPosition(0);
+        
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
+        boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
+        boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+        
+        if (!isSimplifiedMode && !isLandscapeMode) {
+            historyAndRecordsPagerAdapter.recyclerViewSongHistory.scrollToPosition(0);
+            historyAndRecordsPagerAdapter.recyclerViewRecordings.scrollToPosition(0);
+        }
     }
 
     public boolean isScrolled() {
@@ -500,6 +554,11 @@ public class FragmentPlayerFull extends Fragment {
 
     private void fullUpdate() {
         DataRadioStation station = Utils.getCurrentOrLastStation(requireContext());
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
+        boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
+        boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
 
         if (station != null) {
             final ShoutcastInfo shoutcastInfo = PlayerServiceUtil.getShoutcastInfo();
@@ -555,30 +614,35 @@ public class FragmentPlayerFull extends Fragment {
                 textViewGeneralInfo.setContentDescription("正在收听" + station.Name + "电台");
             }
 
-            Drawable flag = CountryFlagsLoader.getInstance().getFlag(requireContext(), station.CountryCode);
-            if (flag != null) {
-                float k = flag.getMinimumWidth() / (float) flag.getMinimumHeight();
-                float viewHeight = artAndInfoPagerAdapter.textViewStationDescription.getTextSize();
-                flag.setBounds(0, 0, (int) (k * viewHeight), (int) viewHeight);
+            if (!isSimplifiedMode && !isLandscapeMode) {
+                Drawable flag = CountryFlagsLoader.getInstance().getFlag(requireContext(), station.CountryCode);
+                if (flag != null) {
+                    float k = flag.getMinimumWidth() / (float) flag.getMinimumHeight();
+                    float viewHeight = artAndInfoPagerAdapter.textViewStationDescription.getTextSize();
+                    flag.setBounds(0, 0, (int) (k * viewHeight), (int) viewHeight);
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    artAndInfoPagerAdapter.textViewStationDescription.setCompoundDrawablesRelative(flag, null, null, null);
+                } else {
+                    artAndInfoPagerAdapter.textViewStationDescription.setCompoundDrawables(flag, null, null, null);
+                }
+
+                // TODO: add votes/clicks/trend
+
+                artAndInfoPagerAdapter.textViewStationDescription.setText(station.getLongDetails(requireContext()));
+
+                String[] tags = station.TagsAll.split(",");
+                artAndInfoPagerAdapter.viewTags.setTags(Arrays.asList(tags));
+                //artAndInfoPagerAdapter.viewTags.setTagSelectionCallback(tagSelectionCallback);
             }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                artAndInfoPagerAdapter.textViewStationDescription.setCompoundDrawablesRelative(flag, null, null, null);
-            } else {
-                artAndInfoPagerAdapter.textViewStationDescription.setCompoundDrawables(flag, null, null, null);
-            }
-
-            // TODO: add votes/clicks/trend
-
-            artAndInfoPagerAdapter.textViewStationDescription.setText(station.getLongDetails(requireContext()));
-
-            String[] tags = station.TagsAll.split(",");
-            artAndInfoPagerAdapter.viewTags.setTags(Arrays.asList(tags));
-            //artAndInfoPagerAdapter.viewTags.setTagSelectionCallback(tagSelectionCallback);
         }
 
         updateAlbumArt();
-        updateRecordings();
+        
+        if (!isSimplifiedMode && !isLandscapeMode) {
+            updateRecordings();
+        }
         
         // 直接更新播放按钮，类似于小播放器的实现
         
@@ -664,6 +728,23 @@ public class FragmentPlayerFull extends Fragment {
         }
 
         final StreamLiveInfo liveInfo = PlayerServiceUtil.getMetadataLive();
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
+        boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
+        boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+
+        if (isSimplifiedMode || isLandscapeMode) {
+            if (station.hasIcon()) {
+                Picasso.get()
+                        .load(station.IconUrl)
+                        .error(R.drawable.ic_launcher)
+                        .into(imageViewArt);
+            } else {
+                imageViewArt.setImageResource(R.drawable.ic_launcher);
+            }
+            return;
+        }
 
         if (lastLiveInfoForTrackMetadata != null &&
                 TextUtils.equals(lastLiveInfoForTrackMetadata.getArtist(), liveInfo.getArtist()) &&
@@ -769,13 +850,29 @@ public class FragmentPlayerFull extends Fragment {
 
                     DataRadioStation station = Utils.getCurrentOrLastStation(fragment.requireContext());
 
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(fragment.requireContext());
+                    String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
+                    boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
+                    boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+
                     if (station != null && station.hasIcon()) {
-                        Picasso.get()
-                                .load(station.IconUrl)
-                                .error(R.drawable.ic_launcher)
-                                .into(fragment.artAndInfoPagerAdapter.imageViewArt);
+                        if (isSimplifiedMode || isLandscapeMode) {
+                            Picasso.get()
+                                    .load(station.IconUrl)
+                                    .error(R.drawable.ic_launcher)
+                                    .into(fragment.imageViewArt);
+                        } else {
+                            Picasso.get()
+                                    .load(station.IconUrl)
+                                    .error(R.drawable.ic_launcher)
+                                    .into(fragment.artAndInfoPagerAdapter.imageViewArt);
+                        }
                     } else {
-                        fragment.artAndInfoPagerAdapter.imageViewArt.setImageResource(R.drawable.ic_launcher);
+                        if (isSimplifiedMode || isLandscapeMode) {
+                            fragment.imageViewArt.setImageResource(R.drawable.ic_launcher);
+                        } else {
+                            fragment.artAndInfoPagerAdapter.imageViewArt.setImageResource(R.drawable.ic_launcher);
+                        }
                     }
 
                     fragment.trackMetadataCallback = null;
@@ -797,9 +894,20 @@ public class FragmentPlayerFull extends Fragment {
                         final String albumArtUrl = albumArts.get(0).url;
 
                         if (!TextUtils.isEmpty(albumArtUrl)) {
-                            Picasso.get()
-                                    .load(albumArtUrl)
-                                    .into(fragment.artAndInfoPagerAdapter.imageViewArt);
+                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(fragment.requireContext());
+                            String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
+                            boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
+                            boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+
+                            if (isSimplifiedMode || isLandscapeMode) {
+                                Picasso.get()
+                                        .load(albumArtUrl)
+                                        .into(fragment.imageViewArt);
+                            } else {
+                                Picasso.get()
+                                        .load(albumArtUrl)
+                                        .into(fragment.artAndInfoPagerAdapter.imageViewArt);
+                            }
 
                             if (!albumArtUrl.equals(trackHistoryEntry.stationIconUrl)) {
                                 fragment.trackHistoryRepository.setTrackArtUrl(trackHistoryEntry.uid, albumArtUrl);
@@ -953,9 +1061,15 @@ public class FragmentPlayerFull extends Fragment {
                 deltaSeconds = Math.max(deltaSeconds, 0);
                 fragmentPlayerFull.textViewTimePlayed.setText(DateUtils.formatElapsedTime(deltaSeconds));
 
-                fragmentPlayerFull.textViewTimeCached.setText(DateUtils.formatElapsedTime(PlayerServiceUtil.getBufferedSeconds()));
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(fragmentPlayerFull.requireContext());
+                String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
+                boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
+                boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
 
-                fragmentPlayerFull.updateRunningRecording();
+                if (!isSimplifiedMode && !isLandscapeMode) {
+                    fragmentPlayerFull.textViewTimeCached.setText(DateUtils.formatElapsedTime(PlayerServiceUtil.getBufferedSeconds()));
+                    fragmentPlayerFull.updateRunningRecording();
+                }
             }
         }
     }

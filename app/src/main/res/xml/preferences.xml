@@ -47,6 +47,15 @@
             android:key="bottom_navigation"
             android:title="@string/settings_bottom_navigation" />
 
+        <ListPreference
+            android:defaultValue="default"
+            android:entries="@array/fullscreen_mode_entries"
+            android:entryValues="@array/fullscreen_mode_values"
+            android:key="fullscreen_mode"
+            android:title="@string/settings_fullscreen_mode"
+            search:summary=""
+            android:summary="%s" />
+
     </PreferenceScreen>
 
     <PreferenceScreen android:title="@string/settings_startup_behaviour"
