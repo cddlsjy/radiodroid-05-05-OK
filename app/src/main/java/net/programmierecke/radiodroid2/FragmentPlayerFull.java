@@ -623,8 +623,9 @@ public class FragmentPlayerFull extends Fragment {
         String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
         boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
         boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+        boolean isCoverMode = FULLSCREEN_MODE_COVER.equals(mode);
         
-        if (!isSimplifiedMode && !isLandscapeMode) {
+        if (!isSimplifiedMode && !isLandscapeMode && !isCoverMode) {
             historyAndRecordsPagerAdapter.recyclerViewSongHistory.scrollToPosition(0);
             historyAndRecordsPagerAdapter.recyclerViewRecordings.scrollToPosition(0);
         } else if (isLandscapeMode && historyAndFavouritesPagerAdapter != null) {
@@ -744,7 +745,7 @@ public class FragmentPlayerFull extends Fragment {
 
         updateAlbumArt();
         
-        if (!isSimplifiedMode && !isLandscapeMode) {
+        if (!isSimplifiedMode && !isLandscapeMode && !isCoverMode) {
             updateRecordings();
         }
         
@@ -967,9 +968,10 @@ public class FragmentPlayerFull extends Fragment {
                     String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
                     boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
                     boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+                    boolean isCoverMode = FULLSCREEN_MODE_COVER.equals(mode);
 
                     if (station != null && station.hasIcon()) {
-                        if (isSimplifiedMode || isLandscapeMode) {
+                        if (isSimplifiedMode || isLandscapeMode || isCoverMode) {
                             Picasso.get()
                                     .load(station.IconUrl)
                                     .error(R.drawable.ic_launcher)
@@ -981,7 +983,7 @@ public class FragmentPlayerFull extends Fragment {
                                     .into(fragment.artAndInfoPagerAdapter.imageViewArt);
                         }
                     } else {
-                        if (isSimplifiedMode || isLandscapeMode) {
+                        if (isSimplifiedMode || isLandscapeMode || isCoverMode) {
                             fragment.imageViewArt.setImageResource(R.drawable.ic_launcher);
                         } else {
                             fragment.artAndInfoPagerAdapter.imageViewArt.setImageResource(R.drawable.ic_launcher);
@@ -1011,8 +1013,9 @@ public class FragmentPlayerFull extends Fragment {
                             String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
                             boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
                             boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+                            boolean isCoverMode = FULLSCREEN_MODE_COVER.equals(mode);
 
-                            if (isSimplifiedMode || isLandscapeMode) {
+                            if (isSimplifiedMode || isLandscapeMode || isCoverMode) {
                                 Picasso.get()
                                         .load(albumArtUrl)
                                         .into(fragment.imageViewArt);
@@ -1244,8 +1247,9 @@ public class FragmentPlayerFull extends Fragment {
                 String mode = prefs.getString("fullscreen_mode", FULLSCREEN_MODE_DEFAULT);
                 boolean isSimplifiedMode = FULLSCREEN_MODE_SIMPLIFIED.equals(mode);
                 boolean isLandscapeMode = FULLSCREEN_MODE_LANDSCAPE.equals(mode);
+                boolean isCoverMode = FULLSCREEN_MODE_COVER.equals(mode);
 
-                if (!isSimplifiedMode && !isLandscapeMode) {
+                if (!isSimplifiedMode && !isLandscapeMode && !isCoverMode) {
                     fragmentPlayerFull.textViewTimeCached.setText(DateUtils.formatElapsedTime(PlayerServiceUtil.getBufferedSeconds()));
                     fragmentPlayerFull.updateRunningRecording();
                 }
