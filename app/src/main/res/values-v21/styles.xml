@@ -51,6 +51,10 @@
         <!-- workaround for lower API -->
         <item name="colorAccentMy">@color/colorAccent</item>
 
+        <item name="colorDivider">@android:color/darker_gray</item>
+        <item name="colorTextPrimary">@color/textColorPrimary</item>
+        <item name="colorTextSecondary">@color/textColorSecondary</item>
+
         <item name="viewInflaterClass">androidx.appcompat.app.AppCompatViewInflater</item>
     </style>
 
@@ -97,6 +101,10 @@
 
         <!-- workaround for lower API -->
         <item name="colorAccentMy">@color/colorAccentDark</item>
+
+        <item name="colorDivider">@android:color/darker_gray</item>
+        <item name="colorTextPrimary">@android:color/white</item>
+        <item name="colorTextSecondary">@android:color/darker_gray</item>
 
         <item name="viewInflaterClass">androidx.appcompat.app.AppCompatViewInflater</item>
     </style>
